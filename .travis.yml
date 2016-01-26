@@ -11,4 +11,4 @@ install:
  - pip install argparse validators
 
 script:
- - python test_batchdownloader.py
+ - python test_batchjpegdownloader.py
