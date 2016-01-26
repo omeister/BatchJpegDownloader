@@ -73,16 +73,16 @@ class ArgumentParser:
         parser.add_argument('--output_path', type=str, required = True, help='An output path, where the JPEG files are stored.')
         
         # Add a mandatory positional argument for the JPEG list file.
-        parser.add_argument('jpeg_list_file', metavar='jpeg_list_file', type=file, help='A text file that contains a newline-separated' \
-'list of URLs to JPEG files.')
+        parser.add_argument('jpeg_list_file', type=file, help='A text file that contains a newline-separated list of URLs to JPEG files.')
 
         # Parse the program arguments. argparse will check if all arguments have been correctly provided.
         try:        
             arguments = parser.parse_args()
-        except IOError as e:        
+        except IOError as e:
+            print "Error: Argument parser returned an error."       
             print "IOError (" + repr(e.errno) + "): " + e.strerror
             quit()
-        
+
         return arguments
         
     @property
@@ -97,13 +97,13 @@ class ArgumentParser:
 #
 # @section DESCRIPTION
 #
-# This class returns an iterator over a set of URLs defined in a list file
+# This class returns a generator of a set of URLs defined in a list file
 #
 class ListFileURLGenerator:
     def __init__(self, list_file, valid_extensions):
         self.list_file = list_file
         
-        # Check if the urls list is an iterable and fail otherwise.
+        # Check if the file is iterable and fail otherwise.
         try:
             iterator = iter(self.list_file)
         except TypeError:
@@ -111,22 +111,30 @@ class ListFileURLGenerator:
            quit()
 
         self.valid_extensions = valid_extensions
-    
+
         # Use the validators package to check if the urls are correctly formatted:
         try:
             import validators
+            
+            # Reset file position to start
+            self.list_file.seek(0)
 
-            # Check if every line in the file is a valid URL
+            # Check if every (non-whitespace) line in the file is a valid URL
             for url in self.list_file:          
-                assert validators.url(url)
+                if len(url.strip()) > 0 and not validators.url(url):
+                    print "Error: Invalid URL: " + url
+                    quit()
 
         except ImportError:
             print "Warning: failed to load the validators package."
             print "To check URLs for correctness install the module via" 
             print "pip install validators"
             print ""
-
+ 
     def __iter__(self):
+        # Reset file position to start
+        self.list_file.seek(0)
+
         # Process every line of the file as a URL
         for url in self.list_file:
             # Remove whitespaces from the URL
@@ -142,7 +150,7 @@ class ListFileURLGenerator:
                 # Yield the URL
                 yield url_no_whitespaces
             elif len(extension) > 0:
-                #Print a warning for any (non-whitespace) line in the file that is not recognized as a URL
+                #Print a warning for any (non-whitespace) line in the file that is not recognized as the correct file type
                 print "Warning: Ignoring file " + url_no_whitespaces + ", as it does not appear to be of type " + repr(self.valid_extensions) + "."
 
 # @author Oliver Meister (o.meister@gmx.net)
@@ -193,6 +201,7 @@ class BatchDownloader:
                 try: 
                     os.mkdir(self.download_directory)
                 except IOError as e:
+                    print "Error: Cannot create the directory '" + self.download_directory + "'"
                     print "IOError (" + e.errno + "): " + e.strerror
                     quit()
                 except OSError:
@@ -210,7 +219,7 @@ class BatchDownloader:
 
         if os.path.isfile(filename):
             if not self.quiet_mode:
-                print "Warning: File '" + filename + "' already exists: "   
+                print "Warning: File '" + filename + "' already exists."   
 
                 # 'yes', 'no', 'always', and 'never' are valid answers
                 valid_answers = ("yes", "no", "always", "never")
@@ -224,7 +233,7 @@ class BatchDownloader:
                 
                 #Set flags according to user input
                 self.overwrite = prompt_overwrite in ("yes", "always")
-                self.quiet_mode = prompt_overwrite in ("no", "never")
+                self.quiet_mode = prompt_overwrite in ("always", "never")
             
             # If prompt is disabled, use the default setting
 
@@ -259,6 +268,7 @@ class BatchDownloader:
             iterator = iter(urls)
         except TypeError:
            print "Error: ", urls, " object must be iterable."
+           quit()
 
         # Create the download directory if it does not exist yet
         self.create_download_directory()
@@ -281,8 +291,8 @@ class BatchDownloader:
 # @section DESCRIPTION
 #
 # The main() method is invoked when the script is called directly from command line. 
-# It parses the program arguments for the list file and passes it to the URL iterator 
-# that returns an iterable. The URL iterator is passed to a batch downloader class that 
+# It parses the program arguments for the list file and passes it to the URL generator 
+# that returns an iterable. The URL generator is passed to a batch downloader class that 
 # starts downloading the files into the output path.
 
 def main():
@@ -291,14 +301,14 @@ def main():
 
     #Create a config object that reads the list filename and output path from program arguments
     config = ArgumentParser()
-    
+
     # Create a generator over the list file and specify that we are interested in the JPEG format only
     url_iterator = ListFileURLGenerator(config.jpeg_list_file, ("jpg", "jpeg"))
 
     # Create a downloader
     downloader = BatchDownloader(config.output_path)
 
-    # Download all the files given by the iterator
+    # Download all the files given by the generator
     downloader.download(url_iterator)
 
 # If this is the main document, call the main function to read in program arguments.
