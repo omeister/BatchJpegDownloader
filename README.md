@@ -26,14 +26,14 @@ Create a directory (named bjd here) and execute the following steps:
     cd <bjd>
     git clone https://github.com/omeister/BatchJpegDownloader .
 
-This will download the source files for into <bjd>.
+This will download the source files for BatchJPEGDownloader into the bjd folder.
 Additionally, you may have to install the argparse module in order to read in program arguments. The validators module checks URLs for correctness and is optional. Both can be installed in a single command line:
 
     pip install argparse validators 
 
 ## Execution
 
-Check if everything is correctly installed by running the test script from the main directory:
+You may test the script by running the test suite from the project directory:
     
     cd <bjd>
     python test_batchjpegdownloader.py
