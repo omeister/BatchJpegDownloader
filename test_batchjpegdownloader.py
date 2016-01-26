@@ -43,9 +43,15 @@ from batchjpegdownloader import ListFileURLGenerator, BatchDownloader
 
 class TestListFileURLGenerator(unittest.TestCase):
     def test_invalid_file(self):
-        # Test an invalid list file
-        url_iterator = ListFileURLGenerator(None, ())
-        assert len([_ for _ in url_iterator]) == 0, repr([_ for _ in url_iterator])
+        # Test an invalid list file. The code should throw an exception in this case.
+        try:
+            url_iterator = ListFileURLGenerator(None, ())
+
+            # We should not be able to reach this code line
+            assert False
+        except TypeError:
+            # This example should fail with a Type Error
+            assert True
 
     def test_empty_extensions(self):
         # Test an empty set of extensions
@@ -63,14 +69,20 @@ class TestListFileURLGenerator(unittest.TestCase):
         assert len([_ for _ in url_iterator]) == 3, repr([_ for _ in url_iterator])
 
     def test_incorrect_link(self):
-        # Test an incorrect link in the list file
+        # Test an incorrect link in the list file: no errors expected as URLS should be chocked only syntactically.
         url_iterator = ListFileURLGenerator(open("examples/test_incorrect_link.list"), ("jpg"))
-        assert len([_ for _ in url_iterator]) == 2, repr([_ for _ in url_iterator])
+        assert len([_ for _ in url_iterator]) == 3, repr([_ for _ in url_iterator])
 
     def test_invalid_link(self):
-        # Test an invalid link in the list file
-        url_iterator = ListFileURLGenerator(open("examples/test_invalid_link.list"), ("jpg"))
-        assert len([_ for _ in url_iterator]) == 2, repr([_ for _ in url_iterator])
+        # Test an invalid link in the list file. The code should throw an exception in this case.
+        try:
+            url_iterator = ListFileURLGenerator(open("examples/test_invalid_link.list"), ("jpg"))
+
+            # We should not be able to reach this code line
+            assert False
+        except ValueError:
+            # This example should fail with a Value Error
+            assert True
 
     def test_invalid_extension(self):
         # Test an invalid extension in the list file
