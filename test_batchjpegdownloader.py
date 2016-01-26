@@ -92,6 +92,73 @@ class TestListFileURLGenerator(unittest.TestCase):
         url_iterator = ListFileURLGenerator("examples/test_invalid_extension.list", ("jpg"))
         assert len([_ for _ in url_iterator]) == 2, repr([_ for _ in url_iterator])
 
+class TestBatchDownloader(unittest.TestCase):
+    def setUp(self):
+        # Create a downloader and disable interactive features as we cannot test them.
+        self.downloader = BatchDownloader("download", default_overwrite = True, default_create_directory = True, quiet_mode = True)
+
+    def test_empty_list(self):
+        # Test an empty list. The code should throw an exception in this case.
+        try:
+            self.downloader.download(None)
+
+            # We should not be able to reach this code line
+            assert False
+        except TypeError:
+            # This example should fail with a Type Error
+            assert True
+
+    def test_invalid_list(self):
+        # Test an invalid list. The code should throw an exception in this case.
+        try:
+            self.downloader.download([None])
+
+            # We should not be able to reach this code line
+            assert False
+        except TypeError:
+            # This example should fail with a Type Error
+            assert True
+
+    def test_invalid_link(self):        
+        # Test an invalid link. The code should throw an exception if the validators module is present
+        try:
+            # Test importing the validators module. If this fails we cannot execute the test and pass it by default.
+            import validators
+
+            self.downloader.download([  "https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg", \
+                "https:///upload.wikimedia.org/wikipedia/en/7/72/Example-serious.jpg", \
+                "https://upload.wikimedia.org/wikipedia/commons/2/29/Example_image_not_be_used_in_article_namespace.jpg"])
+
+            # We should not be able to reach this code line
+            assert False
+        except (ImportError, IOError):
+            # This example should fail with an IO Error or an Import Error
+            assert True
+
+    def test_incorrect_link(self):        
+        # Test an incorrect link. The code should throw an exception.
+        try:
+            # Test importing the validators module. If this fails we cannot execute the test and pass it by default.
+            import validators
+
+            self.downloader.download([  "https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg", \
+                "https://thislinkdoesnotexist.com/Example-serious.jpg", \
+                "https://upload.wikimedia.org/wikipedia/commons/2/29/Example_image_not_be_used_in_article_namespace.jpg"])
+
+            # We should not be able to reach this code line
+            assert False
+        except IOError:
+            # This example should fail with an IO Error
+            assert True
+
+    def test_valid(self):
+        # Test a valid list. The code should not fail in this case
+        self.downloader.download([  "https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg", \
+            "https://upload.wikimedia.org/wikipedia/en/7/72/Example-serious.jpg", \
+            "https://upload.wikimedia.org/wikipedia/commons/2/29/Example_image_not_be_used_in_article_namespace.jpg"])
+
+        assert True
+
 # If this is the main document, call the unit test main function to automatically run all unit tests
 if __name__ == "__main__":
     unittest.main()
