@@ -8,7 +8,11 @@ python:
   - "3.5"
 
 install: 
+<<<<<<< HEAD
  - pip install argparse validators .
+=======
+ - pip install argparse urllib validators
+>>>>>>> 23e393fe68b1147e5aec741c3e2000d55222065d
 
 script:
  - python test_batchdownloader.py
