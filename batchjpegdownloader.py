@@ -117,7 +117,7 @@ class ListFileURLGenerator:
             from validators import url
 
             # Check if every line in the file is a valid URL
-            for url in open(self.list_file):          
+            for url in self.list_file:          
                 assert validators.url(url)
 
         except ImportError:
