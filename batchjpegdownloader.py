@@ -17,7 +17,7 @@ Output:
 """
 
 class ArgumentParser:
-    """Argument parser class for reading in program arguments for the JPEG downloader.
+    """Reads in command line arguments and stores them in object attributes.
     
     This is a wrapper class to the argparse class, allowing a generalization to any other config class.      
 
@@ -31,10 +31,6 @@ class ArgumentParser:
         """
 
         self.arguments = self.parse()
-
-    def __delete__(self):
-        # Ensure the list file is closed after we are doen with it.
-        self.arguments.jpeg_list_file.close()
 
     def parse(self):        
         """Defines arguments for the command line and calls the parser to read them into the arguments attribute.
@@ -97,9 +93,10 @@ class ArgumentParser:
         return self.arguments.create
 
 class ListFileURLGenerator:
-    """Argument parser class for reading in program arguments for the JPEG downloader.
+    """Reads a list of URLs from a file and iterates over it.
     
-    This class is designed as a generator for a set of URLs defined in a file.
+    This class is designed as a generator that iterates over every line of a file and produces
+    an URL if the line matches a given pattern.
 
     Attributes:
         filename (str): Input file that contains a list of URLs, seperated by new lines
@@ -178,7 +175,7 @@ class ListFileURLGenerator:
 
 class BatchDownloader:
     """
-    Batch downloader class for a list of files.
+    Downloads files from a list of URLs.
 
     Downloads a list of files defined in an iterable object. Users must provide a download directory and may provide flags to
     create new directories, overwrite existing files and activate an interactive mode.
@@ -290,7 +287,7 @@ class BatchDownloader:
         """Download a set of files from the given URL to the local folder defined in the download_directory attribute.   
 
         Args:
-            urls (iterable): an iterable list of file URLs that will be downloaded to the folder specified in self.download_directory.
+            urls (iterable): an iterable list of URLs that will be downloaded to the folder specified in the download_directory attribute.
         """
 
         # We need the OS module for portable joining of paths     

@@ -42,6 +42,8 @@ If all test cases pass, you can run the code now using
 
     python batchjpegdownloader.py
 
+Refer to the online help with the parameters '-h' or '--help' for runtime arguments.
+
 ##Build Status
 
 [![Build Status](https://travis-ci.org/omeister/BatchJpegDownloader.svg)](https://travis-ci.org/omeister/BatchJpegDownloader)
