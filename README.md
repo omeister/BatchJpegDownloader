@@ -3,7 +3,7 @@ BatchJPEGDownloader
 
 BatchJPEGDownloader - A tool for batch downloading a list of JPEG files from any URLs into a specified output directory.
 
-Website: [BatchJPEGDownloader](https://github.com/omeister/batchjpegdownloader)
+Website: [BatchJPEGDownloader](https://github.com/omeister/BatchJpegDownloader)
 
 ## Contents
 
@@ -38,4 +38,4 @@ For execution parameters refer to the online help by calling the program with '-
 
 ##Build Status
 
-[![Build Status](https://travis-ci.org/omeister/batchjpegdownloader.svg)](https://travis-ci.org/omeister/batchjpegdownloader)
+[![Build Status](https://travis-ci.org/omeister/BatchJpegDownloader.svg)](https://travis-ci.org/omeister/BatchJpegDownloader)
