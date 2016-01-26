@@ -107,12 +107,11 @@ class ListFileURLGenerator:
         try:
             iterator = iter(self.list_file)
         except TypeError:
-           print "Error: ", self.list_file, " object must be iterable."
-           quit()
+           raise TypeError("Error: " + repr(self.list_file) + " object is not iterable.")
 
         self.valid_extensions = valid_extensions
 
-        # Use the validators package to check if the urls are correctly formatted:
+        # Use the validators package (if available) to check if the urls are correctly formatted:
         try:
             import validators
             
@@ -120,10 +119,12 @@ class ListFileURLGenerator:
             self.list_file.seek(0)
 
             # Check if every (non-whitespace) line in the file is a valid URL
-            for url in self.list_file:          
-                if len(url.strip()) > 0 and not validators.url(url):
-                    print "Error: Invalid URL: " + url
-                    quit()
+            for url in self.list_file:
+                # Remove whitespaces from the URL
+                url_no_whitespaces = url.strip()
+    
+                if len(url_no_whitespaces) > 0 and not validators.url(url_no_whitespaces):
+                    raise ValueError("Invalid URL: '" + url_no_whitespaces + "' in source file '" + list_file.name + "'")
 
         except ImportError:
             print "Warning: failed to load the validators package."
@@ -143,15 +144,16 @@ class ListFileURLGenerator:
             # Get the file extension by splitting the URL at the last '.' and taking the right substring
             extension = url_no_whitespaces.rsplit('.', 1)[-1]
 
-            # Check if the URL has the correct extension.
+            # Check if all (non-whitespace) URLs have the correct extension.
             # If not, print a warning and skip it.
 
-            if extension in self.valid_extensions:
-                # Yield the URL
-                yield url_no_whitespaces
-            elif len(extension) > 0:
-                #Print a warning for any (non-whitespace) line in the file that is not recognized as the correct file type
-                print "Warning: Ignoring file " + url_no_whitespaces + ", as it does not appear to be of type " + repr(self.valid_extensions) + "."
+            if len(extension) > 0:
+                if extension in self.valid_extensions:
+                    # Yield the URL
+                    yield url_no_whitespaces
+                else:
+                    #Print a warning for any URL that is not recognized as the correct file type
+                    print "Warning: Ignoring file " + url_no_whitespaces + ", as it does not appear to be of type " + repr(self.valid_extensions) + "."
 
 # @author Oliver Meister (o.meister@gmx.net)
 #
@@ -203,14 +205,13 @@ class BatchDownloader:
                 except IOError as e:
                     print "Error: Cannot create the directory '" + self.download_directory + "'"
                     print "IOError (" + e.errno + "): " + e.strerror
-                    quit()
+                    raise
                 except OSError:
                     # Ignore OS errors if the path already exists.
                     if not os.path.isdir(self.download_directory):
                         raise
             else:
-                print "Error: Cannot create directory '" + self.download_directory + "'. Aborting.."
-                quit()
+                raise ValueError("Error: Cannot continue without permission to create directory '" + self.download_directory + "'. Aborting..")
 
     def download_file(self, url, filename):
         import os
@@ -267,8 +268,7 @@ class BatchDownloader:
         try:
             iterator = iter(urls)
         except TypeError:
-           print "Error: ", urls, " object must be iterable."
-           quit()
+            raise TypeError("Error: " + repr(self.list_file) + " object is not iterable.")
 
         # Create the download directory if it does not exist yet
         self.create_download_directory()
