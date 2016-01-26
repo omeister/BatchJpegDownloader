@@ -15,7 +15,7 @@ Website: [BatchJPEGDownloader](https://github.com/omeister/BatchJpegDownloader)
 
 The following prerequisites are necessary in order to install and run sam(oa)²:
 * [git](http://git-scm.com/)
-* python 2.7 or higher OR python 3.2 or higher
+* python 2.7 or higher OR python 3.3 or higher
 
 ## Installation
 
