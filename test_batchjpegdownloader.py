@@ -10,7 +10,8 @@ import unittest
 from batchjpegdownloader import ListFileURLGenerator, BatchDownloader
 
 class TestListFileURLGenerator(unittest.TestCase):
-    """Test class for the ListFileURLGenerator class.
+    """
+    Test class for the ListFileURLGenerator class.
     
     Defines a set of test cases to check that the ListFileURLGenerator class correctly treats list files and URLs.
     Also, filtering with the file pattern is checked.
@@ -73,9 +74,10 @@ class TestListFileURLGenerator(unittest.TestCase):
         assert len([_ for _ in url_iterator]) == 2, repr([_ for _ in url_iterator])
 
 class TestBatchDownloader(unittest.TestCase):    
-    """Test class for the BatchDownloader class.
+    """
+    Test class for the BatchDownloader class.
     
-    Defines a set of test cases to check handling of invalid URL lists, invalid URLs, incorrect URLs and valid testcases.
+    Define a set of test cases to check handling of invalid URL lists, invalid URLs, incorrect URLs and valid testcases.
 
     Attributes:
         downloader (object): A BatchDownloader object that is initialized for all test cases. Interactive user requests are disabled.

@@ -3,10 +3,15 @@
 """
 BatchJPEGDownloader, Copyright (c) 2016 Oliver Meister (o.meister@gmx.net)
 
-This is the main project file of BatchJPEGDownloader, it can be called directly from the 
-terminal. 
+This is the main project file of BatchJPEGDownloader, which is a tool that 
+can download a list of JPEG files into a specified output directory.
 
-Downloads a list of JPEG files from any URLs into a specified output directory.
+It may be called directly from the terminal using
+
+   $ python bathjpegdownloader.py
+
+You will need Python 2.7 or higher OR Python 3.3 or higher to execute the program.
+To open the online help, use the argument '-h'.
 
 Input:
     A text file that contains a newline-separated list of URLs to JPEG files.
@@ -17,7 +22,8 @@ Output:
 """
 
 def main():
-    """Main entry point of the program.
+    """
+    Main entry point of the program.
 
     The main() method is invoked when the script is called directly from command line. 
     It parses the program arguments for a file that contains a list of URLs and passes it to the URL generator 
@@ -37,9 +43,7 @@ def main():
     # We can replace it by any other iterator or generator over a set of URLs.
     url_iterator = ListFileURLGenerator(config.jpeg_list_file, "*.jpg")
 
-    # Create a batch downloader, set the output directory and set flags.
-    # As we are interested in robustness, we use a custom class here
-
+    # Create a batch downloader, define the output directory and set file access permissions.
     downloader = BatchDownloader(download_directory = config.output_directory, \
         default_overwrite = config.force_download, default_create_directory = config.create_output_directory)
 
@@ -47,31 +51,32 @@ def main():
     downloader.download(url_iterator)
 
 class ArgumentParser:
-    """Reads in command line arguments and stores them in object attributes.
+    """Read in command line arguments and store them in object attributes.
     
-    This is a wrapper class to the argparse class, allowing a generalization to any other config class.      
+    This is a wrapper class to the argparse class, allowing a generalization to any other configuration class.      
 
     Attributes:
         arguments (object): Program arguments given by the argparse class.
 
+    Raises:
+        ImportError: If the argparse module is not found
+
     """
 
     def __init__(self):
-        """Initializes the object by calling the internal parser, reading in program arguments and storing them in the arguments attribute.
-        """
+        """Initializes the object by calling the internal parser, reading in program arguments and storing them in the arguments attribute."""
 
         self.arguments = self.parse()
 
     def parse(self):        
-        """Defines arguments for the command line and calls the parser to read them into the arguments attribute.
-        """
+        """Define arguments for the command line and calls the parser to read them into the arguments attribute."""
 
         # Try importing the argparse module and throw an exception in case importing fails.
 
         try:
             import argparse
         except ImportError:
-            print("Error: Failed to load the argparse library.")
+            print("Error: Failed to load the argparse module.")
             print(" If you use python 2 below version 2.7 or python 3 below version 3.2, ")
             print(" you may have to install the module using the command")
             print("   pip install argparse")
@@ -87,10 +92,10 @@ class ArgumentParser:
         # Add a mandatory positional argument for the JPEG list file.
         parser.add_argument('FILE', type=str, help='Text file that contains a URL link to a JPEG file in each line.')
        
-        # Add an optional argument to ensure the user knows where the data is stored.
+        # Add an optional argument to allow creation of the output directory.
         parser.add_argument('-c', '--create', nargs='?', type=bool, const = True, default= False, help='If true, the output directory will be created if it does not exist.')
         
-        # Add an optional argument to ensure the user knows where the data is stored.
+        # Add an optional argument to allow overwriting of existing files.
         parser.add_argument('-f', '--force', nargs='?', type=bool, const = True, default= False, help='If true, existing files will be overwritten.')
         
         # Parse the program arguments. argparse will check if all arguments have been correctly provided.
@@ -100,33 +105,30 @@ class ArgumentParser:
         
     @property
     def jpeg_list_file(self):        
-        """Text file that contains a URL link to a JPEG file in each line.
-        """
+        """Text file that contains a URL link to a JPEG file in each line."""
         return self.arguments.FILE
         
     @property
     def output_directory(self):        
-        """Output directory, where the JPEG files will be stored.
-        """
+        """Output directory, where the JPEG files will be stored."""
         return self.arguments.out
         
     @property
     def force_download(self):        
-        """If true, existing files will be overwritten.
-        """
+        """If true, existing files will be overwritten."""
         return self.arguments.force
         
     @property
     def create_output_directory(self):        
-        """If true, the output directory will be created if it does not exist.
-        """
+        """If true, the output directory will be created if it does not exist."""
         return self.arguments.create
 
 class ListFileURLGenerator:
-    """Reads a list of URLs from a file and iterates over it.
+    """
+    Read a list of URLs from a file and iterate over the URLs.
     
-    This class is designed as a generator that iterates over every line of a file and produces
-    an URL if the line matches a given pattern.
+    This class is a generator over the lines of an input file.
+    Every line that matches a given pattern will be iterated during traversal.
 
     Attributes:
         filename (str): Input file that contains a list of URLs, seperated by new lines
@@ -135,14 +137,21 @@ class ListFileURLGenerator:
     """
 
     def __init__(self, filename, pattern = "*"):
-        """Initializes a URL generator from a list provided by a text file. The pattern argument allows to filter the URLs by their names.
+        """
+        Initialize a URL generator from a list of URLs provided in the file `filename`. 
+
+        The `pattern` argument allows to filter the URLs by their names.
 
         Args:
-            filename (str):  Input file that contains a list of URLs, seperated by new lines
-            pattern (str): Optional filter to include only some file types in the generator. May contain wildcards.
+            filename (str): Input file that contains a list of URLs, seperated by new lines
+            pattern (str):  Optional filter to include only some file types in the generator. May contain wildcards.
 
         Example:
             generator = ListFileURLGenerator("example/test_valid.list", "*.jpg")
+
+        Raises:
+            IOError:    If `filename` is not a valid file name.
+            ValueError: If any URL in the file `filename` is not formatted correctly
         """
 
         self.filename = filename
@@ -177,7 +186,8 @@ class ListFileURLGenerator:
             raise
 
     def __iter__(self):    
-        """ Iterates over the list file in the attribute self.filename and generates an object for every 
+        """
+        Iterate over the list file in the attribute self.filename and generate an object for every 
         line with a valid URL that matches the filter defined in the attribute self.pattern."
         """
 
@@ -205,14 +215,16 @@ class ListFileURLGenerator:
 
 class BatchDownloader:
     """
-    Downloads files from a list of URLs.
+    Download files from a list of URLs.
 
-    Downloads a list of files defined in an iterable object. Users must provide a download directory and may provide flags to
+    Download a list of files defined in an iterable object. Users must provide a download directory and may provide flags to
     create new directories, overwrite existing files and activate an interactive mode.
     """
 
     def __init__(self, download_directory, default_overwrite = False, default_create_directory = False):
-        """Initializes a batch downloader for a list of files. 
+        """
+        Initialize a batch downloader for a list of files. 
+
         You may specify a download directory and a set of flags for error handling. 
         If it does not exist yet, the download directory will be created upon request.
 
@@ -233,10 +245,15 @@ class BatchDownloader:
         self.create_download_directory()
 
     def create_download_directory(self):
-        """Checks if the download directory exists. 
+        """
+        Create download directory if required. 
+
         If the directory does not exist and permission is given, 
         the directory will be created. Otherwise, it will raise 
         a ValueError exception.
+
+        Raises:
+            ValueError: If the output directory does not exist and permission to create it has not been given.
         """
 
         # We need the OS module to check if the path exists.
@@ -264,13 +281,19 @@ class BatchDownloader:
                 raise ValueError("Output directory " + repr(self.download_directory) + " does not exist.")
 
     def download_file(self, url, filename):
-        """Downloads a single file from the given URL to the local system, renaming it 
-        to the filename argument in the process. 
-        If the file already exists, it will either be overwrittenor skipped.        
+        """
+        Download a single file from the given URL to the local system.
+
+        The file is downloaded from the URL and stored with the name of the filename argument. 
+        If the file already exists and permission is given, the existing file will be overwritten.  
+        Otherwise download is skipped with a warning.      
 
         Args:
             url (str): URL to the source 
             filename (str): If True, already existing files will be overwritten.
+
+        Raises:
+            IOError: If the file download fails (for example when the URL does not point to a file).
         """
 
         # We need the OS module for file output
@@ -314,10 +337,14 @@ class BatchDownloader:
             raise
 
     def download(self, urls):
-        """Download a set of files from the given URL to the local folder defined in the download_directory attribute.   
+        """
+        Download a set of files from the given URLs to the local folder defined in the download_directory attribute.   
 
         Args:
             urls (iterable): an iterable list of URLs that will be downloaded to the folder specified in the download_directory attribute.
+
+        Raises:
+            TypeError: if `urls` is not an iterable object or the entries of `urls` are not of type string.
         """
 
         # We need the OS module for portable joining of paths     
