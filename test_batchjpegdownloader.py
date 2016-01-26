@@ -30,7 +30,7 @@
 #
 # @section DESCRIPTION
 #
-# Executes unit tests for the ListFileURLGenerator class, the 
+# Executes unit tests for the ListFileURLGenerator class.
 #
 # Input:
 #        * none.

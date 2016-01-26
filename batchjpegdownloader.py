@@ -114,7 +114,7 @@ class ListFileURLGenerator:
     
         # Use the validators package to check if the urls are correctly formatted:
         try:
-            from validators import url
+            import validators
 
             # Check if every line in the file is a valid URL
             for url in self.list_file:          
