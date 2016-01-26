@@ -51,6 +51,10 @@ class ArgumentParser:
     def __init__(self):
         self.arguments = self.parse()
 
+    def __delete__(self):
+        # Ensure the list file is closed after we are doen with it.
+        self.arguments.jpeg_list_file.close()
+
     def parse(self):
         # The main script uses the arparse module to parse program aguments. 
         # Try importing the module and throw an exception in case it fails to do so.
@@ -58,12 +62,11 @@ class ArgumentParser:
         try:
             import argparse
         except ImportError:
-            print "Error: Failed to load the argparse library."
-            print " If you use python 2 below version 2.7 or python 3 below version 3.2, "
-            print " you may have to install the module using the command" 
-            print "   pip install argparse"
-            print ""
-            print "Original error message:"
+            print("Error: Failed to load the argparse library.")
+            print(" If you use python 2 below version 2.7 or python 3 below version 3.2, ")
+            print(" you may have to install the module using the command")
+            print("   pip install argparse")
+            print("")
             raise
 
         # Create a parser object.
@@ -73,15 +76,10 @@ class ArgumentParser:
         parser.add_argument('--output_path', type=str, required = True, help='An output path, where the JPEG files are stored.')
         
         # Add a mandatory positional argument for the JPEG list file.
-        parser.add_argument('jpeg_list_file', type=file, help='A text file that contains a newline-separated list of URLs to JPEG files.')
+        parser.add_argument('jpeg_list_file', type=str, help='A text file that contains a newline-separated list of URLs to JPEG files.')
 
         # Parse the program arguments. argparse will check if all arguments have been correctly provided.
-        try:        
-            arguments = parser.parse_args()
-        except IOError as e:
-            print "Error: Argument parser returned an error."       
-            print "IOError (" + repr(e.errno) + "): " + e.strerror
-            quit()
+        arguments = parser.parse_args()
 
         return arguments
         
@@ -100,60 +98,57 @@ class ArgumentParser:
 # This class returns a generator of a set of URLs defined in a list file
 #
 class ListFileURLGenerator:
-    def __init__(self, list_file, valid_extensions):
-        self.list_file = list_file
-        
-        # Check if the file is iterable and fail otherwise.
+    def __init__(self, filename, valid_extensions):
+        self.filename = filename
+
+        # Check if we can open the file and fail otherwise
         try:
-            iterator = iter(self.list_file)
-        except TypeError:
-           raise TypeError("Error: " + repr(self.list_file) + " object is not iterable.")
+            with open(self.filename, 'r') as list_file:
+                self.valid_extensions = valid_extensions
 
-        self.valid_extensions = valid_extensions
+                # Use the validators package (if available) to check if the urls are correctly formatted:
+                try:
+                    import validators
+                    
+                    # Check if every (non-whitespace) line in the file is a valid URL
+                    for url in list_file:
+                        # Remove whitespaces from the URL
+                        url_no_whitespaces = url.strip()
 
-        # Use the validators package (if available) to check if the urls are correctly formatted:
-        try:
-            import validators
-            
-            # Reset file position to start
-            self.list_file.seek(0)
+                        if len(url_no_whitespaces) > 0 and not validators.url(url_no_whitespaces):
+                            raise ValueError("Invalid URL: '" + url_no_whitespaces + "' in source file '" + self.filename + "'")
 
-            # Check if every (non-whitespace) line in the file is a valid URL
-            for url in self.list_file:
+                except ImportError:
+                    print("Warning: failed to load the validators package.")
+                    print("To check URLs for correctness install the module via")
+                    print("pip install validators")
+                    print("")
+
+        except IOError:
+            print("Error: '" + list_file + "' does not appear to be a valid file.")
+            raise
+
+    def __iter__(self):
+        with open(self.filename, 'r') as list_file:
+            # Process every line of the file as a URL
+            for url in list_file:
                 # Remove whitespaces from the URL
                 url_no_whitespaces = url.strip()
-    
-                if len(url_no_whitespaces) > 0 and not validators.url(url_no_whitespaces):
-                    raise ValueError("Invalid URL: '" + url_no_whitespaces + "' in source file '" + list_file.name + "'")
+        
+                # Get the file extension by splitting the URL at the last '.' and taking the right substring
+                extension = url_no_whitespaces.rsplit('.', 1)[-1]
 
-        except ImportError:
-            print "Warning: failed to load the validators package."
-            print "To check URLs for correctness install the module via" 
-            print "pip install validators"
-            print ""
- 
-    def __iter__(self):
-        # Reset file position to start
-        self.list_file.seek(0)
+                # Check if all (non-whitespace) URLs have the correct extension.
+                # If not, print a warning and skip it.
 
-        # Process every line of the file as a URL
-        for url in self.list_file:
-            # Remove whitespaces from the URL
-            url_no_whitespaces = url.strip()
-    
-            # Get the file extension by splitting the URL at the last '.' and taking the right substring
-            extension = url_no_whitespaces.rsplit('.', 1)[-1]
-
-            # Check if all (non-whitespace) URLs have the correct extension.
-            # If not, print a warning and skip it.
-
-            if len(extension) > 0:
-                if extension in self.valid_extensions:
-                    # Yield the URL
-                    yield url_no_whitespaces
-                else:
-                    #Print a warning for any URL that is not recognized as the correct file type
-                    print "Warning: Ignoring file " + url_no_whitespaces + ", as it does not appear to be of type " + repr(self.valid_extensions) + "."
+                if len(extension) > 0:
+                    if extension in self.valid_extensions:
+                        # Yield the URL
+                        yield url_no_whitespaces
+                    else:
+                        #Print a warning for any URL that is not recognized as the correct file type
+                        print("Warning: Ignoring file '" + url_no_whitespaces + \
+                        "', as it does not appear to be of type " + repr(self.valid_extensions) + ".")
 
 # @author Oliver Meister (o.meister@gmx.net)
 #
@@ -174,21 +169,28 @@ class BatchDownloader:
     def create_download_directory(self):
         import os
 
+        # For python 3 compatibility, bind input to raw_input in python 2
+
+        try:
+           get_input = raw_input
+        except NameError:
+           get_input = input
+
         # Check if the directory exists already
 
         if not os.path.isdir(self.download_directory):
             if not self.quiet_mode:
-                print "Warning: Directory '" + self.download_directory + "' does not exist."
+                print("Warning: Directory '" + self.download_directory + "' does not exist.")
 
                 # 'yes' and 'no' are valid answers
                 valid_answers = ("yes", "no")
 
-                # Read case-insensitive user input from the command line (TODO: is there a more elegant way to do this?)
-                prompt_overwrite = raw_input("Create " + repr(valid_answers) + " ? ").lower()
+                # Read case-insensitive user input from the command line
+                prompt_overwrite = get_input("Create " + repr(valid_answers) + " ? ").lower()
 
                 # If the user input is not valid, repeat the question until it is.
                 while prompt_overwrite not in valid_answers:
-                    prompt_overwrite = raw_input("Please enter one of " + repr(valid_answers) + " : ").lower()
+                    prompt_overwrite = get_input("Please enter one of " + repr(valid_answers) + " : ").lower()
                 
                 # Create directory on user request.
                 create_dir = prompt_overwrite in ("yes")
@@ -202,10 +204,6 @@ class BatchDownloader:
             if (create_dir):                
                 try: 
                     os.mkdir(self.download_directory)
-                except IOError as e:
-                    print "Error: Cannot create the directory '" + self.download_directory + "'"
-                    print "IOError (" + e.errno + "): " + e.strerror
-                    raise
                 except OSError:
                     # Ignore OS errors if the path already exists.
                     if not os.path.isdir(self.download_directory):
@@ -216,21 +214,28 @@ class BatchDownloader:
     def download_file(self, url, filename):
         import os
 
+        # Bind get_input to raw_input (Python 2) or input (Python 3)
+
+        try:
+           get_input = raw_input
+        except NameError:
+           get_input = input
+
         # If the file already exists, prompt for overwriting
 
         if os.path.isfile(filename):
             if not self.quiet_mode:
-                print "Warning: File '" + filename + "' already exists."   
+                print("Warning: File '" + filename + "' already exists.")
 
                 # 'yes', 'no', 'always', and 'never' are valid answers
                 valid_answers = ("yes", "no", "always", "never")
 
                 # Read case-insensitive user input from the command line
-                prompt_overwrite = raw_input("Overwrite " + repr(valid_answers) + "? ").lower()
+                prompt_overwrite = get_input("Overwrite " + repr(valid_answers) + "? ").lower()
 
                 # If the user input is not valid, repeat the question until it is.
                 while prompt_overwrite not in valid_answers:
-                    prompt_overwrite = raw_input("Please enter one of " + repr(valid_answers) + " : ").lower()
+                    prompt_overwrite = get_input("Please enter one of " + repr(valid_answers) + " : ").lower()
                 
                 #Set flags according to user input
                 self.overwrite = prompt_overwrite in ("yes", "always")
@@ -241,34 +246,38 @@ class BatchDownloader:
             # Skip the file if overwriting is not allowed.
 
             if not self.overwrite:
-                print "Skipping already existing file '" + filename +"'."
+                print("Skipping already existing file '" + filename +"'.")
                 return
 
-        # Load the urllib module - It is supported by most python versions 
-        # so if an exception occurs here, we cannot handle it.
+        # Print a status message for each download (without newline)
+        from sys import stdout
+        stdout.write("Downloading " + url + " to " + filename + "...")
+            
+        # Load the urllib module.
+        # For compatibility, try both urllib (Python 2) and urllib.request (Python 3)
 
-        import urllib
-
-        # Download the file to the target directory.
-        print "Downloading " + url + " to " + filename + "...",
-                
-        try: 
-            urllib.urlretrieve(url, filename)
-            print "done."
+        try:
+            from urllib import urlretrieve
+        except ImportError: 
+            from urllib.request import urlretrieve
+    
+        try:
+            urlretrieve(url, filename)
+            print("done.")
         except IOError as e:
-            print "failed." 
-            print "IOError (" + e.errno + "): " + e.strerror
-            quit()
+            print("failed.")
+            raise
 
     def download(self, urls):
         # We need the OS module for file I/O       
         import os
-        
+
         # Check if the urls list is an iterable and fail otherwise.
         try:
             iterator = iter(urls)
         except TypeError:
-            raise TypeError("Error: " + repr(self.list_file) + " object is not iterable.")
+            print("Error: " + repr(self.list_file) + " object is not iterable.")
+            raise
 
         # Create the download directory if it does not exist yet
         self.create_download_directory()
@@ -284,7 +293,7 @@ class BatchDownloader:
             # Download the file from the URL and save it as filename
             self.download_file(url, filename)
 
-        print "Done."
+        print("Done.")
 
 # @author Oliver Meister (o.meister@gmx.net)
 #
@@ -296,8 +305,8 @@ class BatchDownloader:
 # starts downloading the files into the output path.
 
 def main():
-    print "BatchJpegDownloader, Copyright (c) 2016 Oliver Meister"
-    print ""
+    print("BatchJpegDownloader, Copyright (c) 2016 Oliver Meister")
+    print("")
 
     #Create a config object that reads the list filename and output path from program arguments
     config = ArgumentParser()
