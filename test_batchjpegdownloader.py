@@ -34,7 +34,7 @@ class TestListFileURLGenerator(unittest.TestCase):
         # While this example should actually crash, there is no portable way to check if
         # the file pattern is a string.
 
-        url_iterator = ListFileURLGenerator("examples/test_valid.list", "*wrong")
+        url_iterator = ListFileURLGenerator("examples/test_valid.list", "")
         assert len([_ for _ in url_iterator]) == 0, repr([_ for _ in url_iterator])
         
     def test_wrong_pattern(self):
@@ -43,12 +43,12 @@ class TestListFileURLGenerator(unittest.TestCase):
         assert len([_ for _ in url_iterator]) == 0, repr([_ for _ in url_iterator])
 
     def test_valid(self):
-        """ Test an empty set of extensions."""
+        """ Test a valid case."""
         url_iterator = ListFileURLGenerator("examples/test_valid.list", "*.jpg")
         assert len([_ for _ in url_iterator]) == 3, repr([_ for _ in url_iterator])
 
     def test_incorrect_link(self):
-        """ Test an incorrect link in the list file: no errors expected as URLS should be chocked only syntactically."""
+        """ Test an incorrect link in the list file: no errors are expected as URLS should be checked only syntactically."""
         url_iterator = ListFileURLGenerator("examples/test_incorrect_link.list", "*.jpg")
         assert len([_ for _ in url_iterator]) == 3, repr([_ for _ in url_iterator])
 
