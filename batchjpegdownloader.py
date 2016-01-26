@@ -70,13 +70,13 @@ class ArgumentParser:
             raise
 
         # Create a parser object.
-        parser = argparse.ArgumentParser(description='Downloads JPEG files given by a list of URLs into a specified output directory..')
+        parser = argparse.ArgumentParser(description='Downloads a list of JPEG files into a specified output directory.')
         
         # Add a mandatory output directory argument to ensure the user knows where the data is stored.
-        parser.add_argument('--output_path', type=str, required = True, help='An output path, where the JPEG files are stored.')
+        parser.add_argument('--output_path', type=str, required = True, help='Output path, where the JPEG files are stored.')
         
         # Add a mandatory positional argument for the JPEG list file.
-        parser.add_argument('jpeg_list_file', type=str, help='A text file that contains a newline-separated list of URLs to JPEG files.')
+        parser.add_argument('jpeg_list_file', type=str, help='Text file that contains a URL link to a JPEG file in each line.')
 
         # Parse the program arguments. argparse will check if all arguments have been correctly provided.
         arguments = parser.parse_args()
@@ -119,6 +119,8 @@ class ListFileURLGenerator:
                             raise ValueError("Invalid URL: '" + url_no_whitespaces + "' in source file '" + self.filename + "'")
 
                 except ImportError:
+                    # If importing fails, print a warning but continue execution
+
                     print("Warning: failed to load the validators package.")
                     print("To check URLs for correctness install the module via")
                     print("pip install validators")
@@ -238,14 +240,14 @@ class BatchDownloader:
                     prompt_overwrite = get_input("Please enter one of " + repr(valid_answers) + " : ").lower()
                 
                 #Set flags according to user input
-                self.overwrite = prompt_overwrite in ("yes", "always")
+                self.default_overwrite = prompt_overwrite in ("yes", "always")
                 self.quiet_mode = prompt_overwrite in ("always", "never")
             
             # If prompt is disabled, use the default setting
 
             # Skip the file if overwriting is not allowed.
 
-            if not self.overwrite:
+            if not self.default_overwrite:
                 print("Skipping already existing file '" + filename +"'.")
                 return
 
@@ -272,11 +274,12 @@ class BatchDownloader:
         # We need the OS module for file I/O       
         import os
 
-        # Check if the urls list is an iterable and fail otherwise.
+        # Check if the urls list is an iterable and throw a Type Error otherwise.
+
         try:
             iterator = iter(urls)
         except TypeError:
-            print("Error: " + repr(self.list_file) + " object is not iterable.")
+            print("Error: " + repr(urls) + " object is not iterable.")
             raise
 
         # Create the download directory if it does not exist yet
@@ -285,7 +288,12 @@ class BatchDownloader:
         # Iterate over the list of URLS and download them to the download directory
         for url in urls:
             # Get the filename without its path by splitting the URL at the last '/' and taking the right substring
-            filename_without_path = url.rsplit('/', 1)[-1]
+            # If this does not work, throw a Type Error as the URL does not appear to be a string.
+
+            try:
+                filename_without_path = url.rsplit('/', 1)[-1]
+            except AttributeError:
+                raise TypeError("Error: '" + repr(url) + "' object in '" + repr(urls) + "' is not of type string.")
 
             # Combine the filename with the download directory to get the local filename
             filename = os.path.join(self.download_directory, filename_without_path)
@@ -305,7 +313,7 @@ class BatchDownloader:
 # starts downloading the files into the output path.
 
 def main():
-    print("BatchJpegDownloader, Copyright (c) 2016 Oliver Meister")
+    print("BatchJPEGDownloader, Copyright (c) 2016 Oliver Meister")
     print("")
 
     #Create a config object that reads the list filename and output path from program arguments
