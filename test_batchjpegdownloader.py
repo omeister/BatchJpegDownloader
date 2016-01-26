@@ -1,49 +1,24 @@
 #!/usr/bin/python
-#
-# @file This file contains a set of unit tests for BatchJPEGDownloader.
-#
-# @author Oliver Meister (o.meister@gmx.net)
-#
-# @section LICENSE
-#
-# The MIT License (MIT)
-#
-# Copyright (c) 2016 Oliver Meister
+"""
+BatchJPEGDownloader, Copyright (c) 2016 Oliver Meister (o.meister@gmx.net)
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-#
-# @section DESCRIPTION
-#
-# Executes unit tests for the ListFileURLGenerator class.
-#
-# Input:
-#        * none.
-#        
-# Output:
-#        * none.
+This file contains a set of unit tests for the ListFileURLGenerator class and the BatchDownloader class in
+batchjpegdownloader.py
+"""
 
 import unittest
 from batchjpegdownloader import ListFileURLGenerator, BatchDownloader
 
 class TestListFileURLGenerator(unittest.TestCase):
+    """Test class for the ListFileURLGenerator class.
+    
+    Defines a set of test cases to check that the ListFileURLGenerator class correctly treats list files and URLs.
+    Also, filtering with the file pattern is checked.
+
+    """
+
     def test_invalid_file(self):
-        # Test an invalid list file. The code should throw an exception in this case.
+        """ Test an invalid list file. The code should throw an exception in this case."""
         try:
             url_iterator = ListFileURLGenerator(None, ())
 
@@ -53,33 +28,38 @@ class TestListFileURLGenerator(unittest.TestCase):
             # This example should fail with a Type Error
             assert True
 
-    def test_empty_extensions(self):
-        # Test an empty set of extensions
-        url_iterator = ListFileURLGenerator("examples/test_valid.list", ())
-        assert len([_ for _ in url_iterator]) == 0, repr([_ for _ in url_iterator])
+    def test_invalid_pattern(self):
+        """ Test an invalid file pattern."""
+            
+        # While this example should actually crash, there is no portable way to check if
+        # the file pattern is a string.
 
-    def test_wrong_extensions(self):
-        # Test an empty set of extensions
-        url_iterator = ListFileURLGenerator("examples/test_valid.list", ("wrong"))
+        url_iterator = ListFileURLGenerator("examples/test_valid.list", "*wrong")
+        assert len([_ for _ in url_iterator]) == 0, repr([_ for _ in url_iterator])
+        
+    def test_wrong_pattern(self):
+        """ Test a wrong file pattern."""
+        url_iterator = ListFileURLGenerator("examples/test_valid.list", "*wrong")
         assert len([_ for _ in url_iterator]) == 0, repr([_ for _ in url_iterator])
 
     def test_valid(self):
-        # Test an empty set of extensions
-        url_iterator = ListFileURLGenerator("examples/test_valid.list", ("jpg"))
+        """ Test an empty set of extensions."""
+        url_iterator = ListFileURLGenerator("examples/test_valid.list", "*.jpg")
         assert len([_ for _ in url_iterator]) == 3, repr([_ for _ in url_iterator])
 
     def test_incorrect_link(self):
-        # Test an incorrect link in the list file: no errors expected as URLS should be chocked only syntactically.
-        url_iterator = ListFileURLGenerator("examples/test_incorrect_link.list", ("jpg"))
+        """ Test an incorrect link in the list file: no errors expected as URLS should be chocked only syntactically."""
+        url_iterator = ListFileURLGenerator("examples/test_incorrect_link.list", "*.jpg")
         assert len([_ for _ in url_iterator]) == 3, repr([_ for _ in url_iterator])
 
     def test_invalid_link(self):
-        # Test an invalid link in the list file. The code should throw an exception if the validators module is present
+        """ Test an invalid link in the list file. The code should throw an exception if the validators module is present."""
+
         try:
             # Test importing the validators module. If this fails we cannot execute the test and pass it by default.
             import validators
 
-            url_iterator = ListFileURLGenerator("examples/test_invalid_link.list", ("jpg"))
+            url_iterator = ListFileURLGenerator("examples/test_invalid_link.list", "*.jpg")
 
             # We should not be able to reach this code line
             assert False
@@ -88,17 +68,26 @@ class TestListFileURLGenerator(unittest.TestCase):
             assert True
 
     def test_invalid_extension(self):
-        # Test an invalid extension in the list file
-        url_iterator = ListFileURLGenerator("examples/test_invalid_extension.list", ("jpg"))
+        """Test an invalid extension in the list file."""
+        url_iterator = ListFileURLGenerator("examples/test_invalid_extension.list", "*.jpg")
         assert len([_ for _ in url_iterator]) == 2, repr([_ for _ in url_iterator])
 
-class TestBatchDownloader(unittest.TestCase):
+class TestBatchDownloader(unittest.TestCase):    
+    """Test class for the BatchDownloader class.
+    
+    Defines a set of test cases to check handling of invalid URL lists, invalid URLs, incorrect URLs and valid testcases.
+
+    Attributes:
+        downloader (object): A BatchDownloader object that is initialized for all test cases. Interactive user requests are disabled.
+
+    """
+
     def setUp(self):
-        # Create a downloader and disable interactive features as we cannot test them.
-        self.downloader = BatchDownloader("download", default_overwrite = True, default_create_directory = True, quiet_mode = True)
+        """Create a downloader and disable interactive features as we cannot test them in an automated environment."""
+        self.downloader = BatchDownloader("download", default_overwrite = True, default_create_directory = True)
 
     def test_empty_list(self):
-        # Test an empty list. The code should throw an exception in this case.
+        """Test an empty list. The code should throw an exception in this case."""
         try:
             self.downloader.download(None)
 
@@ -109,7 +98,8 @@ class TestBatchDownloader(unittest.TestCase):
             assert True
 
     def test_invalid_list(self):
-        # Test an invalid list. The code should throw an exception in this case.
+        """Test an invalid list. The code should throw an exception in this case."""
+
         try:
             self.downloader.download([None])
 
@@ -120,7 +110,8 @@ class TestBatchDownloader(unittest.TestCase):
             assert True
 
     def test_invalid_link(self):        
-        # Test an invalid link. The code should throw an exception if the validators module is present
+        """Test an invalid link. The code should throw an exception if the validators module is present."""
+
         try:
             # Test importing the validators module. If this fails we cannot execute the test and pass it by default.
             import validators
@@ -136,11 +127,8 @@ class TestBatchDownloader(unittest.TestCase):
             assert True
 
     def test_incorrect_link(self):        
-        # Test an incorrect link. The code should throw an exception.
+        """Test an incorrect link. The code should throw an exception."""
         try:
-            # Test importing the validators module. If this fails we cannot execute the test and pass it by default.
-            import validators
-
             self.downloader.download([  "https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg", \
                 "https://thislinkdoesnotexist.com/Example-serious.jpg", \
                 "https://upload.wikimedia.org/wikipedia/commons/2/29/Example_image_not_be_used_in_article_namespace.jpg"])
@@ -152,7 +140,8 @@ class TestBatchDownloader(unittest.TestCase):
             assert True
 
     def test_valid(self):
-        # Test a valid list. The code should not fail in this case
+        """Test a valid list. This method does not check the results but assumes correctness if no exception was raised."""
+
         self.downloader.download([  "https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg", \
             "https://upload.wikimedia.org/wikipedia/en/7/72/Example-serious.jpg", \
             "https://upload.wikimedia.org/wikipedia/commons/2/29/Example_image_not_be_used_in_article_namespace.jpg"])
