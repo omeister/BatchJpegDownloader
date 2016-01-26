@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# @file This file contains a set of unit tests for batchjpegdownloader.
+# @file This file contains a set of unit tests for BatchJPEGDownloader.
 #
 # @author Oliver Meister (o.meister@gmx.net)
 #
@@ -49,32 +49,32 @@ class TestListFileURLGenerator(unittest.TestCase):
 
     def test_empty_extensions(self):
         # Test an empty set of extensions
-        url_iterator = ListFileURLGenerator(open("unit_tests/test_valid.list"), ())
+        url_iterator = ListFileURLGenerator(open("examples/test_valid.list"), ())
         assert len([_ for _ in url_iterator]) == 0, repr([_ for _ in url_iterator])
 
     def test_wrong_extensions(self):
         # Test an empty set of extensions
-        url_iterator = ListFileURLGenerator(open("unit_tests/test_valid.list"), ("wrong"))
+        url_iterator = ListFileURLGenerator(open("examples/test_valid.list"), ("wrong"))
         assert len([_ for _ in url_iterator]) == 0, repr([_ for _ in url_iterator])
 
     def test_valid(self):
         # Test an empty set of extensions
-        url_iterator = ListFileURLGenerator(open("unit_tests/test_valid.list"), ("jpg"))
+        url_iterator = ListFileURLGenerator(open("examples/test_valid.list"), ("jpg"))
         assert len([_ for _ in url_iterator]) == 3, repr([_ for _ in url_iterator])
 
     def test_incorrect_link(self):
         # Test an incorrect link in the list file
-        url_iterator = ListFileURLGenerator(open("unit_tests/test_incorrect_link.list"), ("jpg"))
+        url_iterator = ListFileURLGenerator(open("examples/test_incorrect_link.list"), ("jpg"))
         assert len([_ for _ in url_iterator]) == 2, repr([_ for _ in url_iterator])
 
     def test_invalid_link(self):
         # Test an invalid link in the list file
-        url_iterator = ListFileURLGenerator(open("unit_tests/test_invalid_link.list"), ("jpg"))
+        url_iterator = ListFileURLGenerator(open("examples/test_invalid_link.list"), ("jpg"))
         assert len([_ for _ in url_iterator]) == 2, repr([_ for _ in url_iterator])
 
     def test_invalid_extension(self):
         # Test an invalid extension in the list file
-        url_iterator = ListFileURLGenerator(open("unit_tests/test_invalid_extension.list"), ("jpg"))
+        url_iterator = ListFileURLGenerator(open("examples/test_invalid_extension.list"), ("jpg"))
         assert len([_ for _ in url_iterator]) == 2, repr([_ for _ in url_iterator])
 
 # If this is the main document, call the unit test main function to automatically run all unit tests

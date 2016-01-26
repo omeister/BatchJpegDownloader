@@ -234,15 +234,11 @@ class BatchDownloader:
                 print "Skipping already existing file '" + filename +"'."
                 return
 
-        # Try loading the urllib module for downloading
-        try:
-            import urllib
-        except ImportError:
-            print "Error: Failed to load the urllib library."            
-            print "You may have to install the module using the command" 
-            print "pip install urllib"
-            quit()
-            
+        # Load the urllib module - It is supported by most python versions 
+        # so if an exception occurs here, we cannot handle it.
+
+        import urllib
+
         # Download the file to the target directory.
         print "Downloading " + url + " to " + filename + "...",
                 
