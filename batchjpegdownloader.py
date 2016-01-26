@@ -16,6 +16,36 @@ Output:
     A list of JPEG files stored in the output directory.
 """
 
+def main():
+    """Main entry point of the program.
+
+    The main() method is invoked when the script is called directly from command line. 
+    It parses the program arguments for a file that contains a list of URLs and passes it to the URL generator 
+    that extracts the URLs and is iterable. Next, a batch downloader class is created together with an output directory. 
+    Finally, the URL generator is passed to the downloader to start downloading the files into the output path.
+    """
+
+    print("BatchJPEGDownloader, Copyright (c) 2016 Oliver Meister")
+    print("")
+
+    # Create a config object that reads the list file, the output path and some flags from the command line arguments.
+    # As long as the required properties are provided,
+    # this class may be replaced by any other type of configuration class.
+    config = ArgumentParser()
+
+    # Create a generator that iterates over the list file and specify that we are interested in the JPEG format only
+    # We can replace it by any other iterator or generator over a set of URLs.
+    url_iterator = ListFileURLGenerator(config.jpeg_list_file, "*.jpg")
+
+    # Create a batch downloader, set the output directory and set flags.
+    # As we are interested in robustness, we use a custom class here
+
+    downloader = BatchDownloader(download_directory = config.output_directory, \
+        default_overwrite = config.force_download, default_create_directory = config.create_output_directory)
+
+    # Download all the files given by the generator.
+    downloader.download(url_iterator)
+
 class ArgumentParser:
     """Reads in command line arguments and stores them in object attributes.
     
@@ -314,37 +344,11 @@ class BatchDownloader:
             # Combine the filename with the download directory to get the local filename
             filename = os.path.join(self.download_directory, filename_without_path)
             
-            # Download the file from the URL and save it as filename
+            # Download the file from the URL and save it with the given filename
             self.download_file(url, filename)
 
         print("Done.")
 
-def main():
-    """Main entry point of the program.
-
-    The main() method is invoked when the script is called directly from command line. 
-    It parses the program arguments for a file that contains a list of URLs and passes it to the URL generator 
-    that extracts the URLs and is iterable. Next, a batch downloader class is created together with an output directory. 
-    Finally, the URL generator is passed to the downloader to start downloading the files into the output path.
-    """
-
-    print("BatchJPEGDownloader, Copyright (c) 2016 Oliver Meister")
-    print("")
-
-    #Create a config object that reads the list filename and output path from program arguments
-    config = ArgumentParser()
-
-    # Create a generator over the list file and specify that we are interested in the JPEG format only
-    url_iterator = ListFileURLGenerator(config.jpeg_list_file, "*.jpg")
-
-    # Create a downloader
-    downloader = BatchDownloader(download_directory = config.output_directory, \
-        default_overwrite = config.force_download, default_create_directory = config.create_output_directory)
-
-    # Download all the files given by the generator
-    downloader.download(url_iterator)
-
 # If this is the main document, call the main function to read in program arguments.
 if __name__ == "__main__":
     main()
-
